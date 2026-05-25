@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AppointmentCreated;
 use App\Models\Appointment;
+// use App\Services\SmsService;
+use App\Models\Notification;
 use App\Models\Service;
-use App\Services\SmsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class AppointmentController extends Controller
@@ -82,14 +85,31 @@ class AppointmentController extends Controller
             ."votre rendez-vous du {$request->date} au service {$service->name} "
             .'a été enregistré. Nous vous notifierons dès qu’il sera confirmé avec un médecin.';
 
-        try {
-            if ($phone) {
-                SmsService::send($phone, $message);
-            }
-        } catch (\Throwable $e) {
-            \Log::error('SMS crash: '.$e->getMessage());
+        // try {
+        //     if ($phone) {
+        //         SmsService::send($phone, $message);
+        //     }
+        // } catch (\Throwable $e) {
+        //     \Log::error('SMS crash: '.$e->getMessage());
+        // }
+        // \Log::info('STORE OK REACHED');
+        $user = $patient->user;
+
+        if ($user && $user->email) {
+            Mail::to($user->email)->send(
+                new AppointmentCreated(
+                    $appointment,
+                    $patientName,
+                    $service->name
+                )
+            );
         }
-        \Log::info('STORE OK REACHED');
+        Notification::create([
+            'user_id' => $patient->user->id,
+            'title' => 'Rendez-vous créé',
+            'message' => "Votre rendez-vous du {$request->date} a été enregistré",
+            'type' => 'appointment_created',
+        ]);
 
         return response()->json($appointment, 201);
     }

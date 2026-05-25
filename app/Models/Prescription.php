@@ -11,7 +11,9 @@ class Prescription extends Model
         'consultation_id',
         'notes',
         'qr_code',
-        'status'
+        'status',
+        'signed',
+        'pdf_path'
     ];
 
     public function consultation()
@@ -21,13 +23,13 @@ class Prescription extends Model
 
     public function medications()
     {
-return $this->belongsToMany(
-    Medication::class,
-    'medication_prescription',
-    'prescription_id',
-    'medication_id'
-)->withPivot(['dosage', 'frequency', 'duration'])
- ->withTimestamps();
+        return $this->belongsToMany(
+            Medication::class,
+            'medication_prescription',
+            'prescription_id',
+            'medication_id'
+        )->withPivot(['dosage', 'frequency', 'duration'])
+            ->withTimestamps();
     }
 
     public function transaction()
