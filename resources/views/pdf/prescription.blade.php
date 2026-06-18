@@ -148,7 +148,7 @@
         <div class="hospital-name">SamaDoktor Hospital</div>
         <div class="hospital-info">
             Dakar, Sénégal <br>
-            +221 77 XXX XX XX / +221 78 XXX XX XX <br>
+            +221 77 193 46 74 / +221 78 123 45 67 <br>
             contact@samadoktor.sn
         </div>
     </div>

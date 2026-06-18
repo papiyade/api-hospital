@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Twilio\Rest\Client;
 
-class SmsService
+class SmsServices
 {
     public static function send($to, $message)
     {
@@ -14,22 +14,17 @@ class SmsService
             $token = env('TWILIO_TOKEN');
             $from = env('TWILIO_FROM');
 
-            $response = Http::withBasicAuth($sid, $token)
-                ->asForm()
-                ->post("https://api.twilio.com/2010-04-01/Accounts/$sid/Messages.json", [
-                    'From' => $from,
-                    'To' => $to,
-                    'Body' => $message,
-                ]);
+            $client = new Client($sid, $token);
 
-            if (!$response->successful()) {
-                Log::error("Twilio error: " . $response->body());
-            }
+            $client->messages->create($to, [
+                'from' => $from,
+                'body' => $message,
+            ]);
 
-            return $response->json();
+            return true;
         } catch (\Throwable $e) {
-            Log::error("SMS Exception: " . $e->getMessage());
-            return null;
+            Log::error("Twilio SMS error: " . $e->getMessage());
+            return false;
         }
     }
 }

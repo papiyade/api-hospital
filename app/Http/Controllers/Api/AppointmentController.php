@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Mail\AppointmentCreated;
 use App\Models\Appointment;
-// use App\Services\SmsService;
 use App\Models\Notification;
 use App\Models\Service;
+use App\Services\SmsServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Log;
 
 class AppointmentController extends Controller
 {
@@ -34,7 +35,8 @@ class AppointmentController extends Controller
     {
         $request->validate([
             'service_id' => 'required|exists:services,id',
-            'date' => 'required|date',
+            'date' => 'required|date|after_or_equal:today',
+            'time' => 'required|date_format:H:i',
         ]);
 
         $patient = $request->user()->patient;
@@ -48,11 +50,12 @@ class AppointmentController extends Controller
         //  Empêcher doublon
         $existing = Appointment::where('patient_id', $patient->id)
             ->where('date', $request->date)
+            ->where('time', $request->time)
             ->first();
 
         if ($existing) {
             return response()->json([
-                'message' => 'Vous avez déjà un rendez-vous pour cette date',
+                'message' => 'Vous avez déjà un rendez-vous pour cette date et cette heure',
             ], 400);
         }
 
@@ -68,6 +71,7 @@ class AppointmentController extends Controller
             'patient_id' => $patient->id,
             'service_id' => $request->service_id,
             'date' => $request->date,
+            'time' => $request->time,
             'queue_number' => $queue,
             'status' => 'pending',
             'qr_code' => (string) Str::uuid(), // 🔥 ICI DIRECT
@@ -82,17 +86,25 @@ class AppointmentController extends Controller
         $phone = $patient->phone;
 
         $message = "Bonjour {$patientName}, "
-            ."votre rendez-vous du {$request->date} au service {$service->name} "
+            ."votre rendez-vous du {$request->date} à {$request->time} au service {$service->name} "
             .'a été enregistré. Nous vous notifierons dès qu’il sera confirmé avec un médecin.';
 
-        // try {
-        //     if ($phone) {
-        //         SmsService::send($phone, $message);
-        //     }
-        // } catch (\Throwable $e) {
-        //     \Log::error('SMS crash: '.$e->getMessage());
-        // }
-        // \Log::info('STORE OK REACHED');
+// FORMAT NUMÉRO + ENVOI SMS
+if ($phone) {
+    $phone = preg_replace('/[^0-9+]/', '', $phone);
+
+    if (!str_starts_with($phone, '+')) {
+        $phone = '+221' . ltrim($phone, '0');
+    }
+
+    if (!empty($phone)) {
+        try {
+            SmsServices::send($phone, $message);
+        } catch (\Throwable $e) {
+            Log::error("SMS ERROR: " . $e->getMessage());
+        }
+    }
+}
         $user = $patient->user;
 
         if ($user && $user->email) {
@@ -107,11 +119,14 @@ class AppointmentController extends Controller
         Notification::create([
             'user_id' => $patient->user->id,
             'title' => 'Rendez-vous créé',
-            'message' => "Votre rendez-vous du {$request->date} a été enregistré",
+            'message' => "Votre rendez-vous du {$request->date} à {$request->time} a été enregistré",
             'type' => 'appointment_created',
         ]);
 
-        return response()->json($appointment, 201);
+        return response()->json([
+            'message' => 'Rendez-vous créé',
+            'appointment' => $appointment,
+        ], 201);
     }
 
     public function show(Request $request, $id)

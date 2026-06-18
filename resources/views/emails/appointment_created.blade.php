@@ -16,7 +16,9 @@
     margin:15px 0;
 ">
         <p style="margin:5px 0;"><strong>Service :</strong> {{ $serviceName }}</p>
-        <p style="margin:5px 0;"><strong>Date :</strong> {{ \Carbon\Carbon::parse($appointment->date)->format('d/m/Y') }}</p>
+        <p style="margin:5px 0;"><strong>Date :</strong> {{ \Carbon\Carbon::parse($appointment->date)->format('d/m/Y') }}
+        à {{ \Carbon\Carbon::createFromFormat('H:i', $appointment->time)->format('H:i') }}
+        </p>
         <p style="margin:5px 0;"><strong>Numéro :</strong> {{ $appointment->queue_number }}</p>
     </div>
 
