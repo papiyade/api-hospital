@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\PharmacyProductController;
 use App\Http\Controllers\Api\PharmacyPosController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Models\Department;
 use App\Models\Doctor;
 use App\Models\Notification;
@@ -33,6 +34,7 @@ Route::post('/login', [AuthController::class, 'login']);
 |--------------------------
 */
 Route::middleware('auth:sanctum')->group(function () {
+   Route::get('/profile/me', [ProfileController::class, 'me']);
 
     Route::post('/checkin', [CheckinController::class, 'checkin']);
     Route::post('/appointments/{id}/checkin', [AppointmentController::class, 'checkIn']);
