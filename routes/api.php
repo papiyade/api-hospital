@@ -9,11 +9,11 @@ use App\Http\Controllers\Api\ConsultationController;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\PharmacyController;
-use App\Http\Controllers\Api\PrescriptionController;
-use App\Http\Controllers\Api\ServiceController;
-use App\Http\Controllers\Api\PharmacyProductController;
 use App\Http\Controllers\Api\PharmacyPosController;
+use App\Http\Controllers\Api\PharmacyProductController;
+use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ServiceController;
 use App\Models\Department;
 use App\Models\Doctor;
 use App\Models\Notification;
@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout']);
 
 /*
 |--------------------------
@@ -34,7 +35,8 @@ Route::post('/login', [AuthController::class, 'login']);
 |--------------------------
 */
 Route::middleware('auth:sanctum')->group(function () {
-   Route::get('/profile/me', [ProfileController::class, 'me']);
+    Route::get('/profile/me', [ProfileController::class, 'me']);
+    Route::put('/profile/update', [ProfileController::class, 'update']);
 
     Route::post('/checkin', [CheckinController::class, 'checkin']);
     Route::post('/appointments/{id}/checkin', [AppointmentController::class, 'checkIn']);
@@ -118,7 +120,6 @@ Route::get('/pharmacy/products/{id}', [PharmacyProductController::class, 'show']
 Route::post('/pharmacy/products/{id}', [PharmacyProductController::class, 'update']);
 
 Route::delete('/pharmacy/products/{id}', [PharmacyProductController::class, 'destroy']);
-
 
 // ================= PHARMACY POS =================
 
